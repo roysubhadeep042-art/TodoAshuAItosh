@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Minimal TaskFlow • Smart To-Do</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Navigation / Header -->
+    <header class="app-header">
+      <div class="header-main">
+        <div class="brand">
+          <div class="brand-icon">✓</div>
+          <div>
+            <h1 class="brand-title">TaskFlow</h1>
+            <p class="brand-subtitle" id="currentDateDisplay">Loading date...</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="themeToggleBtn" class="btn-icon" title="Toggle Theme" aria-label="Toggle Theme">
+            <span id="themeIcon">🌙</span>
+          </button>
+          <button id="openPlanBtn" class="btn-secondary btn-sm" title="View Prioritised Morning Plan">
+            🌅 Morning Plan
+          </button>
+        </div>
+      </div>
+
+      <!-- Rollover Status / 10 PM Ticker Bar -->
+      <div class="rollover-banner">
+        <div class="rollover-info">
+          <span class="pulsing-dot"></span>
+          <span id="rolloverTickerText">Nightly 10:00 PM rollover in ...</span>
+        </div>
+        <button id="simulateRolloverBtn" class="btn-accent-ghost btn-xs" title="Simulate the 10:00 PM task roll & morning plan generator right now">
+          ⚡ Run 10 PM Rollover
+        </button>
+      </div>
+    </header>
+
+    <!-- Natural Language Quick-Add Section -->
+    <section class="add-section">
+      <form id="taskForm" class="add-form" autocomplete="off">
+        <div class="input-wrapper">
+          <input 
+            type="text" 
+            id="taskInput" 
+            placeholder='Type anything in plain English, e.g. "call CA Friday 4pm, high"'
+            aria-label="New task in plain English"
+            required
+          />
+          <button type="submit" id="addBtn" class="btn-primary" aria-label="Add task">
+            <span>Add</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+        </div>
+
+        <!-- Live NLP Feedback Chip Bar -->
+        <div id="liveParserChipBar" class="live-chips hidden">
+          <span class="live-label">Auto-Parsed:</span>
+          <span id="chipTitle" class="chip chip-title">Title</span>
+          <span id="chipDate" class="chip chip-date hidden">📅 Date</span>
+          <span id="chipPriority" class="chip chip-prio hidden">⚡ Priority</span>
+        </div>
+
+        <!-- Quick Suggestions -->
+        <div class="quick-tags">
+          <span class="quick-label">Try:</span>
+          <button type="button" class="quick-btn" data-text="call CA Friday 4pm, high">"call CA Friday 4pm, high"</button>
+          <button type="button" class="quick-btn" data-text="doctor appointment tomorrow 10am urgent">"doctor appointment tomorrow 10am urgent"</button>
+          <button type="button" class="quick-btn" data-text="order groceries tonight low">"order groceries tonight low"</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Controls Bar: Filter & Sort -->
+    <div class="controls-bar">
+      <!-- Filter Tabs -->
+      <div class="filter-tabs" role="tablist">
+        <button class="tab-btn active" data-filter="all">All <span id="countAll" class="tab-badge">0</span></button>
+        <button class="tab-btn" data-filter="today">Today <span id="countToday" class="tab-badge">0</span></button>
+        <button class="tab-btn" data-filter="high">High <span id="countHigh" class="tab-badge">0</span></button>
+        <button class="tab-btn" data-filter="pending">Pending <span id="countPending" class="tab-badge">0</span></button>
+        <button class="tab-btn" data-filter="completed">Done <span id="countCompleted" class="tab-badge">0</span></button>
+      </div>
+
+      <!-- Sort Dropdown -->
+      <div class="sort-selector">
+        <label for="sortSelect">Sort:</label>
+        <select id="sortSelect">
+          <option value="smart">Smart Prioritised</option>
+          <option value="deadline">By Deadline</option>
+          <option value="priority">By Priority</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Task List Container -->
+    <main class="tasks-main">
+      <div id="taskList" class="task-list">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div id="emptyState" class="empty-state hidden">
+        <div class="empty-icon">☕</div>
+        <h3 class="empty-title">All caught up!</h3>
+        <p class="empty-desc">No tasks in this view. Type something above to add a new task.</p>
+      </div>
+    </main>
+
+    <!-- Footer Stats -->
+    <footer class="app-footer">
+      <div class="footer-stats">
+        <span id="footerPendingText">0 pending</span>
+        <span>•</span>
+        <span id="footerRolledText">0 rolled over</span>
+        <span>•</span>
+        <span id="footerCompletedText">0 completed</span>
+      </div>
+      <div class="footer-note">All data saved locally in SQLite • Auto-rolls at 10:00 PM</div>
+    </footer>
+  </div>
+
+  <!-- Morning Plan Modal -->
+  <div id="planModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalPlanTitle">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <span class="modal-tag">🌅 Morning Briefing</span>
+          <h2 id="modalPlanTitle" class="modal-title">Prioritised Morning Plan</h2>
+          <p id="modalPlanDate" class="modal-subtitle">For tomorrow</p>
+        </div>
+        <button id="closePlanBtn" class="btn-icon" aria-label="Close modal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- AI / Executive Summary -->
+        <div class="plan-summary-card">
+          <div class="summary-badge">Summary</div>
+          <p id="planSummaryText">Loading plan summary...</p>
+        </div>
+
+        <!-- Schedule Slots -->
+        <div class="plan-schedule-section">
+          <h3 class="section-title">Recommended Morning Schedule</h3>
+          <div id="planScheduleContainer" class="schedule-blocks">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="reTriggerPlanBtn" class="btn-secondary btn-sm">Re-run 10 PM Rollover</button>
+        <button id="dismissPlanBtn" class="btn-primary btn-sm">Got it, let's execute</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
